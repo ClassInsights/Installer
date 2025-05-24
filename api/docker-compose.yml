@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    restart: unless-stopped
+    env_file:
+      - path: ./api.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  ci-api:
+    image: ghcr.io/classinsights/api:latest
+    restart: unless-stopped
+    ports:
+      - "52001:8081"
+    labels:
+      - "classinsights.update"
+    env_file:
+      - path: ./api.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./cert.pfx:/app/cert.pfx
+      - ./data:/app/data
+  ci-dashboard:
+    image: ghcr.io/classinsights/dashboard:latest
+    restart: unless-stopped
+    ports:
+      - "52000:80"
+    depends_on:
+      - ci-api
+    labels:
+      - "classinsights.update"
+    volumes:
+      - cert.crt:/website/cert.crt
+      - cert.key:/website/cert.key
+volumes:
+  postgres_data:
