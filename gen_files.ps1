@@ -24,7 +24,7 @@ function Random {
         [int] $length
     )
     
-    return ([System.Web.Security.Membership]::GeneratePassword($length, 4)).Replace("$", "!").Replace(";", "?")
+    return ([System.Web.Security.Membership]::GeneratePassword($length, 4)).Replace("$", "!").Replace(";", "?").Replace("}", "&").Replace("{", "&").Replace(":", "#")
 }
 
 # Download scripts and files
