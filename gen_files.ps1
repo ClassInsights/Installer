@@ -55,9 +55,9 @@ Export-PfxCertificate -Cert $sslCert -FilePath "$PSScriptRoot/api/cert.pfx" -Pas
 $computerToken = Random 32
 $postgresPassword = Random 32
 
-Write-Host "Finalisiere install_gpo.ps1"
-$gpoInstaller = (Get-Content "$PSScriptRoot/gpo/install_gpo.ps1").Replace("[API_TOKEN]", $computerToken).Replace("[API_URL]", $localApi)
-Set-Content -Path "$PSScriptRoot/gpo/install_gpo.ps1" -Value $gpoInstaller
+Write-Host "Finalisiere gpo_install.ps1"
+$gpoInstaller = (Get-Content "$PSScriptRoot/gpo/gpo_install.ps1").Replace("[API_TOKEN]", $computerToken).Replace("[API_URL]", $localApi)
+Set-Content -Path "$PSScriptRoot/gpo/gpo_install.ps1" -Value $gpoInstaller
 
 Write-Host "Finalisiere api.env für Api"
 $apiSettings = (Get-Content "$PSScriptRoot/api/api.env").Replace("[JWT_KEY]", (Random 60)).Replace("[COMPUTER_TOKEN]", $computerToken).Replace("[LICENSE_KEY]", $license).Replace("[PFX_PASSWORD]", $certPassword).Replace("[POSTGRES_PASSWORD]", $postgresPassword)
