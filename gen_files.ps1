@@ -29,6 +29,10 @@ function Random {
 
 # Download scripts and files
 try {
+    # Create folders
+    New-Item -ItemType Directory -Force -Path "$PSScriptRoot/gpo"
+    New-Item -ItemType Directory -Force -Path "$PSScriptRoot/api"
+
     Invoke-WebRequest -Uri "$baseUrl/gpo/gpo_install.ps1" -OutFile "$PSScriptRoot/gpo/gpo_install.ps1" -UseBasicParsing -ErrorAction Stop
     Invoke-WebRequest -Uri "$baseUrl/api/classinsights.sh" -OutFile "$PSScriptRoot/api/classinsights.sh" -UseBasicParsing -ErrorAction Stop
 
@@ -76,7 +80,7 @@ if ($uploadFiles.ToLower() -ne 'j') {
 }
 
 $username = Read-Host "Username: "
-$serverIp = Read-Host "IP des Servers: "
+$serverIp = Read-Host "IP des Servers: " # TODO: SHOW SCP COMMAND TO COPY PASTE
 Start-Process -FilePath "scp" -ArgumentList ("-r api $username@" + $serverIp + ":~/.") -NoNewWindow -Wait
 
 Write-Host "Die Daten wurden erfolgreich auf den Server kopiert!"
