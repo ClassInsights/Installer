@@ -10,9 +10,9 @@ KEY_FILE="cert.key"
 # Load environment variables
 if [[ -f api.env ]]; then
     echo "Loading environment variables from api.env"
-    set -o allexport
-    source api.env
-    set +o allexport
+    set -a
+    source <(sed -E 's/^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=[[:space:]]*"?(.*?)"?[[:space:]]*$/\1="\2"/' api.env)
+    set +a
 else
     echo "Error: api.env file not found. Please provide it with PFX_PASSWORD set."
     exit 1
