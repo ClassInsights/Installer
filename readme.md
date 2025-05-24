@@ -120,10 +120,11 @@ Computerkonfiguration
 **3.2 Stammzertifikat importieren**
 ```
 Computerkonfiguration
-└─ Windows-Einstellungen
-   └─ Sicherheitseinstellungen
-      └─ Richtlinien für öffentliche Schlüssel
-         └─ Vertrauenswürdige Stammzertifizierungsstellen
+└─ Richtlinien
+   └─ Windows-Einstellungen
+      └─ Sicherheitseinstellungen
+         └─ Richtlinien für öffentliche Schlüssel
+            └─ Vertrauenswürdige Stammzertifizierungsstellen
 ```
 -   Rechtsklick → **Importieren** → `ClassInsights_CA.cer`
 -   Folgen Sie dem Zertifikat-Import-Assistenten
