@@ -10,9 +10,9 @@ KEY_FILE="cert.key"
 # Load environment variables
 if [[ -f api.env ]]; then
     echo "Loading environment variables from api.env"
-    set -a
+    set -o allexport
     source api.env
-    set +a
+    set +o allexport
 else
     echo "Error: api.env file not found. Please provide it with PFX_PASSWORD set."
     exit 1
