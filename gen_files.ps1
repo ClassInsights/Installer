@@ -9,7 +9,7 @@ $license = Read-Host 'Lizenz: '
 
 Write-Host 'Was ist die IP Addresse des ClassInsights API Server? (Die Clients sollten die API unter dieser Adresse erreichen können)'
 $ip = Read-Host 'IP: '
-$localApi = "https://" + $ip + ":52001/api"
+$localApi = "https://" + $ip + ":52001" # important: no /api
 
 # Function to log errors
 function Log-Error {
