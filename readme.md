@@ -4,6 +4,7 @@ Neben einer **ClassInsights-Lizenz** benötigen Sie:
 
 - **Private IP** des Servers, auf dem Dashboard und lokale API laufen sollen (Linux empfohlen; Windows-Support folgt in Kürze)  
 - **Windows Active Directory**¹ (diese Anleitung setzt eine Windows-AD-Umgebung voraus)
+- **Computernamen** müssen mithilfe eines Pattern oder Regex den WebUntis Räumen zugeordnet werden können
 
 > ¹ Wenn Ihre Schule ein anderes Authentifizierungs- oder Verzeichnisdienst-System nutzt, setzen Sie sich bitte vor Beginn mit uns in Verbindung: office@classinsights.at
 
@@ -23,9 +24,7 @@ Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 [Hier](https://raw.githubusercontent.com/classinsights/installer/refs/heads/main/gen_files.ps1) finden Sie das PowerShell Installationsskript zum herunterladen und ausführen:
 ```powershell
-Invoke-WebRequest `
-  -Uri https://raw.githubusercontent.com/classinsights/installer/main/gen_files.ps1 `
-  -OutFile .\gen_files.ps1
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/classinsights/installer/main/gen_files.ps1 -OutFile .\gen_files.ps1
 ```
 
 **3. Skript starten**
@@ -54,6 +53,8 @@ geben Sie Ihre SSH-Zugangsdaten ein:
 Username: <Ihr-Username>
 IP des Servers: <Server-IP>
 ```
+> Bei Problemen können Sie den Befehl auch manuell eingeben:
+> scp -r api username@server:~/."
 
 > Damit werden alle generierten Dateien automatisch per SCP auf den Zielserver kopiert.
 
@@ -65,7 +66,7 @@ api/
 ├─ classinsights.sh
 ├─ docker-compose.yml
 gpo/
-├─ install_gpo.ps1
+├─ gpo_install.ps1
 ├─ ClassInsights_CA.cer
 gen_files.ps1
 ```
@@ -81,7 +82,7 @@ ssh <Ihr-Username>@<Server-IP>
 **2. In das API-Verzeichnis wechseln & Installation starten**
 ```bash
 cd api
-sudo ./classinsights.sh install
+chmod +x classinsights.sh && sudo ./classinsights.sh install
 ```
 
 -   Das Skript installiert [Docker](https://www.docker.com/)  und startet alle benötigten Container automatisch.
@@ -93,16 +94,16 @@ sudo ./classinsights.sh install
 ## 3. Verteilung per Gruppenrichtlinie (GPO)
 
 **1. GPO-Objekt erstellen**
-Um ClassInsights mithilfe einer Gruppenrichtlinie zu verbreiten, können Sie sie das `install_gpo.ps1` Skript auf Ihrem Domain Controller ausführen. Dadurch wird ein `ClassInsights` Gruppenrichtlinienobjekt erstellt, das als Vorlage dient:
+Um ClassInsights mithilfe einer Gruppenrichtlinie zu verbreiten, können Sie sie das `gpo_install.ps1` Skript, innerhalb des `gpo` Ordners, auf Ihrem Domain Controller ausführen. Dadurch wird ein `ClassInsights` Gruppenrichtlinienobjekt erstellt, das als Vorlage dient:
 
 ```powershell
-.\install_gpo.ps1
+.\gpo_install.ps1
 ```
 **2. Dateien für Clients bereitstellen**
 Kopieren Sie in einen freigegebenen Netzwerk-Ordner (z. B.<br> `\\ihre.ad.domain\SYSVOL\ihre.ad.domain\scripts`):
 
 -   `ClassInsights_CA.cer`  
--   `ClassInsights.msi` (Installer; [hier](https://123) downloaden)
+-   `ClassInsights.msi` (Installer; [hier](https://github.com/ClassInsights/WinService/releases/latest/download/ClassInsights.msi) downloaden)
 
 **3. GPO konfigurieren**
 Als nächstes öffnen wir die Gruppenrichtlinienverwaltung und wählen bei den Gruppenrichtlinienobjekte `ClassInsights` zum Bearbeiten aus:
