@@ -29,7 +29,7 @@ services:
     labels:
       - "classinsights.update"
     volumes:
-      - cert.crt:/website/cert.crt
-      - cert.key:/website/cert.key
+      - ./cert.crt:/website/cert.crt
+      - ./cert.key:/website/cert.key
 volumes:
   postgres_data:
