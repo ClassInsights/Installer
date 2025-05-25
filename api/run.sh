@@ -14,12 +14,15 @@ if [[ -f "$ENV_FILE" ]]; then
     set -a
     source "$ENV_FILE"
     set +a
+    # Trim whitespace from PFX_PASSWORD
+    PFX_PASSWORD="${PFX_PASSWORD#${PFX_PASSWORD%%[![:space:]]*}}"
+    PFX_PASSWORD="${PFX_PASSWORD%%${PFX_PASSWORD##*[![:space:]]}}"
 else
     echo "Error: $ENV_FILE not found. Please provide it with PFX_PASSWORD set."
     exit 1
 fi
 
-# Validate required variables
+# Validate required variable
 if [[ -z "${PFX_PASSWORD:-}" ]]; then
     echo "Error: PFX_PASSWORD is not set in $ENV_FILE."
     exit 1
@@ -37,50 +40,27 @@ detect_distro() {
 
 DISTRO=$(detect_distro)
 
-# Install a package via OS-native or Docker repo
+# Install Docker packages via OS-native or Docker repo
 install_docker_packages() {
     case "$DISTRO" in
         ubuntu|debian)
             sudo apt-get update
-            sudo apt-get install -y \
-                ca-certificates \
-                curl \
-                gnupg \
-                lsb-release
-
-            # Add Docker’s official GPG key and repo
+            sudo apt-get install -y ca-certificates curl gnupg lsb-release
             sudo mkdir -p /etc/apt/keyrings
             curl -fsSL https://download.docker.com/linux/$DISTRO/gpg \
                 | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
             echo \
               "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-              https://download.docker.com/linux/$DISTRO \
-              $(lsb_release -cs) stable" \
+              https://download.docker.com/linux/$DISTRO $(lsb_release -cs) stable" \
               | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
             sudo apt-get update
-            sudo apt-get install -y \
-                docker-ce \
-                docker-ce-cli \
-                containerd.io \
-                docker-buildx-plugin \
-                docker-compose-plugin
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
             ;;
 
         centos|rhel|fedora)
-            sudo dnf -y install \
-                yum-utils \
-                device-mapper-persistent-data \
-                lvm2
-            sudo yum-config-manager \
-                --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-            sudo dnf -y install \
-                docker-ce \
-                docker-ce-cli \
-                containerd.io \
-                docker-buildx-plugin \
-                docker-compose-plugin
+            sudo dnf -y install yum-utils device-mapper-persistent-data lvm2
+            sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+            sudo dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
             ;;
 
         arch)
@@ -107,7 +87,6 @@ extract_certs() {
             echo "Extracting certificate and key from $PFX_FILE"
             openssl pkcs12 -in "$PFX_FILE" -clcerts -nokeys -out "$CRT_FILE" -passin pass:"$PFX_PASSWORD"
             openssl pkcs12 -in "$PFX_FILE" -nocerts -nodes -out "$KEY_FILE" -passin pass:"$PFX_PASSWORD"
-            chmod 600 "$KEY_FILE"
             echo "Extraction complete."
         else
             echo "Error: $PFX_FILE not found and no existing certs present."
@@ -115,6 +94,25 @@ extract_certs() {
         fi
     else
         echo "Certificates already exist. Skipping extraction."
+    fi
+}
+
+# Ensure Docker is installed before attempting install
+ensure_docker_installed() {
+    if ! command -v docker &> /dev/null; then
+        echo "Docker not found. Proceeding with installation."
+        install_docker_packages
+        enable_docker_service
+    else
+        echo "Docker is already installed. Skipping installation."
+    fi
+}
+
+# Ensure OpenSSL available
+ensure_openssl_installed() {
+    if ! command -v openssl &> /dev/null; then
+        echo "OpenSSL not found. Installing prerequisites."
+        install_docker_packages # shares curl and gnupg for repo setup
     fi
 }
 
@@ -126,11 +124,10 @@ fi
 
 case "$1" in
     install)
-        echo "=== Installing Docker and dependencies ==="
-        install_docker_packages
-        enable_docker_service
+        echo "=== Checking Docker installation ==="
+        ensure_docker_installed
         echo "=== Extracting certificates ==="
-        install_docker_packages # ensure openssl installed
+        ensure_openssl_installed
         extract_certs
         echo "=== Starting services with Docker Compose ==="
         docker compose up -d
