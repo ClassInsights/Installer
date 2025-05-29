@@ -1,7 +1,26 @@
 ﻿Add-Type -AssemblyName System.Web;
 
+$year = (Get-Date).year
+Write-Host @'
+  ____ _               ___           _       _     _       
+ / ___| | __ _ ___ ___|_ _|_ __  ___(_) __ _| |__ | |_ ___ 
+| |   | |/ _` / __/ __|| || '_ \/ __| |/ _` | '_ \| __/ __|
+| |___| | (_| \__ \__ \| || | | \__ \ | (_| | | | | |_\__ \
+ \____|_|\__,_|___/___/___|_| |_|___/_|\__, |_| |_|\__|___/
+                                       |___/               
+'@
+
+Write-Host "
+Komplettlösung für Energieeffizienz und Computerhandling in Schulen
+Copyright 2024-${year}, ClassInsights, GbR
+https://classinsights.at, https://github.com/ClassInsights
+
+===================================================
+"
+
 # Variables
 $baseUrl = "https://raw.githubusercontent.com/classinsights/installer/refs/heads/main"
+$msiUrl = "https://github.com/ClassInsights/WinService/releases/latest/download/ClassInsights.msi"
 
 # Ask
 Write-Host "Bitte gib deinen ClassInsights Lizenz Key ein"
@@ -34,6 +53,7 @@ try {
     New-Item -ItemType Directory -Force -Path "$PSScriptRoot/api"
 
     Invoke-WebRequest -Uri "$baseUrl/gpo/gpo_install.ps1" -OutFile "$PSScriptRoot/gpo/gpo_install.ps1" -UseBasicParsing -ErrorAction Stop
+    Invoke-WebRequest -Uri $msiUrl -OutFile "$PSScriptRoot/gpo/ClassInsights.msi" -UseBasicParsing -ErrorAction Stop
     Invoke-WebRequest -Uri "$baseUrl/api/classinsights.sh" -OutFile "$PSScriptRoot/api/classinsights.sh" -UseBasicParsing -ErrorAction Stop
 
     Invoke-WebRequest -Uri "$baseUrl/api/docker-compose.yml" -OutFile "$PSScriptRoot/api/docker-compose.yml" -UseBasicParsing -ErrorAction Stop    
@@ -75,12 +95,17 @@ Set-Content -Path "$PSScriptRoot/api/docker-compose.yml" -Value $dockerCompose
 # Ask to upload files
 Write-Host "Es wurden alle Dateien erzeugt."
 $uploadFiles = Read-Host "Wollen Sie die Dateien für die lokale API nun auf den Server hochladen? (J/N)"
-if ($uploadFiles.ToLower() -ne 'j') {
-    exit
+if ($uploadFiles.ToLower() -eq 'j') {
+    $username = Read-Host "Username: "
+    $serverIp = Read-Host "IP des Servers: "
+    & scp -o StrictHostKeyChecking=accept-new -r api2 "${username}@${serverIp}:~/."
+    
+    Write-Host "Die Daten wurden erfolgreich auf den Server kopiert!"    
 }
 
-$username = Read-Host "Username: "
-$serverIp = Read-Host "IP des Servers: " # TODO: SHOW SCP COMMAND TO COPY PASTE
-Start-Process -FilePath "scp" -ArgumentList ("-r api $username@" + $serverIp + ":~/.") -NoNewWindow -Wait
+# Ask to create GPO
+$proceed = Read-Host "Wollen Sie nun zu der Erstellung des Gruppenrichtlinienobjekts übergehen? (J/N)"
+if ($proceed.ToLower() -eq 'j') {
+    & "$PSScriptRoot\gpo\gpo_install.ps1"
+}
 
-Write-Host "Die Daten wurden erfolgreich auf den Server kopiert!"
