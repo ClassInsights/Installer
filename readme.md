@@ -2,7 +2,7 @@
 
 Neben einer **ClassInsights-Lizenz** benötigen Sie:
 
-- **Private IP** des Servers, auf dem Dashboard und lokale API laufen sollen (Linux empfohlen; Windows-Support folgt in Kürze)  
+- **Private IP** des Servers, auf dem Dashboard und lokale API laufen sollen (Linux empfohlen; Windows-Support folgt bald)  
 - **Windows Active Directory**¹ (diese Anleitung setzt eine Windows-AD-Umgebung voraus)
 - **Computernamen** müssen mithilfe eines Pattern oder Regex den WebUntis Räumen zugeordnet werden können
 
@@ -10,7 +10,7 @@ Neben einer **ClassInsights-Lizenz** benötigen Sie:
 
 ---
 
-## 1. Vorbereitung auf dem Admin-PC
+## 1. Vorbereitung auf dem Domain Controller
 
 **1. ExecutionPolicy ändern** 
 Bevor Sie starten, vergewissern Sie sich, dass Sie PowerShell-Skripte ausführen dürfen:
@@ -24,12 +24,12 @@ Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 [Hier](https://raw.githubusercontent.com/classinsights/installer/refs/heads/main/gen_files.ps1) finden Sie das PowerShell Installationsskript zum herunterladen und ausführen:
 ```powershell
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/classinsights/installer/main/gen_files.ps1 -OutFile .\gen_files.ps1
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/classinsights/installer/main/classinsights.ps1 -OutFile .\classinsights.ps1
 ```
 
 **3. Skript starten**
 ```powershell
-.\gen_files.ps1
+.\classinsights.ps1
 ```
 > Der Assistent führt Sie durch die Erstellung aller benötigten Dateien.
 
@@ -48,7 +48,7 @@ Wenn der Assistent fragt:
 ```
 Wollen Sie die Dateien für die lokale API nun auf den Server hochladen? (J/N) J
 ```
-geben Sie Ihre SSH-Zugangsdaten ein:
+geben Sie Ihre SSH-Zugangsdaten für ihren lokalen ClassInsights Server ein, damit alle benötigten Dateien auf den Zielserver kopiert werden:
 ```
 Username: <Ihr-Username>
 IP des Servers: <Server-IP>
@@ -56,9 +56,13 @@ IP des Servers: <Server-IP>
 > Bei Problemen können Sie den Befehl auch manuell eingeben:
 > scp -r api username@server:~/."
 
-> Damit werden alle generierten Dateien automatisch per SCP auf den Zielserver kopiert.
+Nun können wir uns ein `ClassInsights` Gruppenrichtlinienobjekt erstellen lassen:
+```
+Wollen Sie nun zu der Erstellung des Gruppenrichtlinienobjekts übergehen? (J/N): J
+```
+> Hierbei wird das generierte `gpo_install.ps1` Skript ausgeführt
 
-**Verzeichnisstruktur nach der Vorbereitung**
+**Verzeichnisstruktur zur Orientierung**
 ```
 api/
 ├─ api.env
@@ -68,10 +72,51 @@ api/
 gpo/
 ├─ gpo_install.ps1
 ├─ ClassInsights_CA.cer
-gen_files.ps1
+├─ ClassInsights.msi
+classinsights.ps1
 ```
 
-## 2. Installation auf dem Server
+## 2. Konfigurierung der Gruppenrichtlinie (GPO)
+
+**1. Dateien für Clients bereitstellen**
+Kopieren Sie in einen freigegebenen Netzwerk-Ordner (z. B.<br> `\\ihre.ad.domain\SYSVOL\ihre.ad.domain\scripts`):
+
+-   `ClassInsights_CA.cer`  
+-   `ClassInsights.msi`
+
+> Die Dateien befinden sich in dem erstellten `gpo` Ordner
+
+**2. GPO konfigurieren**
+Als nächstes öffnen wir die Gruppenrichtlinienverwaltung und wählen bei den Gruppenrichtlinienobjekte `ClassInsights` zum Bearbeiten aus:
+
+**2.1 Softwareinstallation**
+```
+Computerkonfiguration
+└─ Richtlinien
+   └─ Softwareeinstellungen
+      └─ Softwareinstallation
+```
+
+- → Rechtsklick → `Neu > Paket` → `ClassInsights.msi` → `OK`
+
+**2.2 Stammzertifikat importieren**
+```
+Computerkonfiguration
+└─ Richtlinien
+   └─ Windows-Einstellungen
+      └─ Sicherheitseinstellungen
+         └─ Richtlinien für öffentliche Schlüssel
+            └─ Vertrauenswürdige Stammzertifizierungsstellen
+```
+-   Rechtsklick → **Importieren** → `ClassInsights_CA.cer`
+-   Folgen Sie dem Zertifikat-Import-Assistenten
+
+**3. GPO aktivieren**
+- Weisen Sie das **ClassInsights**-GPO den gewünschten Organisationseinheiten zu.
+
+> Nach der nächsten Gruppenrichtlinienauffrischung installieren sich die Clients automatisch.
+
+## 3. Installation auf dem ClassInsights API Server
 
 **1. SSH-Verbindung herstellen**  
 Verwenden Sie z. B.  [Putty](https://www.putty.org/), PowerShell oder ein anderes Terminal:
@@ -90,50 +135,6 @@ chmod +x classinsights.sh && sudo ./classinsights.sh install
 -   Standard-Port für das Dashboard: **52000**
 
 > **Hinweis:** Stellen Sie sicher, dass Port 52000 und 52001 in Ihrer Firewall geöffnet sind und alle Clients Zugriff haben.
-
-## 3. Verteilung per Gruppenrichtlinie (GPO)
-
-**1. GPO-Objekt erstellen**
-Um ClassInsights mithilfe einer Gruppenrichtlinie zu verbreiten, können Sie sie das `gpo_install.ps1` Skript, innerhalb des `gpo` Ordners, auf Ihrem Domain Controller ausführen. Dadurch wird ein `ClassInsights` Gruppenrichtlinienobjekt erstellt, das als Vorlage dient:
-
-```powershell
-.\gpo_install.ps1
-```
-**2. Dateien für Clients bereitstellen**
-Kopieren Sie in einen freigegebenen Netzwerk-Ordner (z. B.<br> `\\ihre.ad.domain\SYSVOL\ihre.ad.domain\scripts`):
-
--   `ClassInsights_CA.cer`  
--   `ClassInsights.msi` (Installer; [hier](https://github.com/ClassInsights/WinService/releases/latest/download/ClassInsights.msi) downloaden)
-
-**3. GPO konfigurieren**
-Als nächstes öffnen wir die Gruppenrichtlinienverwaltung und wählen bei den Gruppenrichtlinienobjekte `ClassInsights` zum Bearbeiten aus:
-
-**3.1 Softwareinstallation**
-```
-Computerkonfiguration
-└─ Richtlinien
-   └─ Softwareeinstellungen
-      └─ Softwareinstallation
-```
-
-- → Rechtsklick → `Neu > Paket` → `ClassInsights.msi`
-
-**3.2 Stammzertifikat importieren**
-```
-Computerkonfiguration
-└─ Richtlinien
-   └─ Windows-Einstellungen
-      └─ Sicherheitseinstellungen
-         └─ Richtlinien für öffentliche Schlüssel
-            └─ Vertrauenswürdige Stammzertifizierungsstellen
-```
--   Rechtsklick → **Importieren** → `ClassInsights_CA.cer`
--   Folgen Sie dem Zertifikat-Import-Assistenten
-
-**4. GPO aktivieren**
-- Weisen Sie das **ClassInsights**-GPO den gewünschten Organisationseinheiten zu.
-
-> Nach der nächsten Gruppenrichtlinienauffrischung installieren sich die Clients automatisch.
 
 ## 4. Räume konfigurieren
 - Rufen Sie im Browser das Dashboard auf:
