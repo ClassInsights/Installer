@@ -64,4 +64,5 @@ try {
     exit 1
 }
 
-Write-Host "GPO '$GpoName' was created and configured successfully."
+Write-Host "GPO '$GpoName' wurde erfolgreich erstellt!"
+Write-Host "Bitte bearbeite diese nun manuell, um die ClassInsights Software zu verteilen und das Stammzertifikat zu installieren!"

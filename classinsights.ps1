@@ -18,6 +18,13 @@ https://classinsights.at, https://github.com/ClassInsights
 ===================================================
 "
 
+Write-Host "
+
+Bitte besuchen Sie: https://classinsights.at/installation um eine Anleitung für die Installation zu erhalten!
+
+
+"
+
 # Variables
 $baseUrl = "https://raw.githubusercontent.com/classinsights/installer/refs/heads/main"
 $msiUrl = "https://github.com/ClassInsights/WinService/releases/latest/download/ClassInsights.msi"
