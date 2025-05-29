@@ -136,8 +136,17 @@ chmod +x classinsights.sh && sudo ./classinsights.sh install
 
 > **Hinweis:** Stellen Sie sicher, dass Port 52000 und 52001 in Ihrer Firewall geöffnet sind und alle Clients Zugriff haben.
 
-## 4. Räume konfigurieren
-- Rufen Sie im Browser das Dashboard auf:
+## 4. URLs und Lehrergruppen festlegen
+Rufen Sie im Browser https://classinsights.at auf und melden Sie sich an. Danach wählen Sie bei Ihrer Schule das Einstellungssymbol und fügen Ihre lokalen URLs ein:
+ - **Lokales Dashboard:** `https://<DEINE-SERVER-IP>:52000`
+ -  **Lokale API:** `https://<DEINE-SERVER-IP>:52001`
+
+Außerdem können Sie hier festlegen, welche Azure Gruppen Lehrer sind und somit Zugriff auf das Dashboard bekommen sollen.
+
+Mit einem Klick auf `Zum Dashboard` gelangen Sie zum lokalen Dashboard
+
+## 5. Räume konfigurieren
+
 - Unter **Konfiguration → Raum-Pattern** legen Sie ein Namensmuster fest (z. B. `DV1*`), damit ClassInsights WebUntis-Räume automatisch zuordnet.
 > Achten Sie darauf, dass das Muster genau zu Ihren Computernamen passt.
 
