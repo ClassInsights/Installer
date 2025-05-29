@@ -148,5 +148,11 @@ chmod +x classinsights.sh && sudo ./classinsights.sh install
 
 ## FAQ
 
-### Lokale Dashboard URL ändern
-...
+### ClassInsights API Server IP ändern
+Führen Sie folgenden Befehl auf Ihrem Domain Controller aus:
+```
+Set-GPRegistryValue -Name "ClassInsights" -Key "HKLM\SOFTWARE\ClassInsights" -Type String -ValueName "ApiUrl" -Value "https://<IHRE-NEUE-SERVER-IP>:52001"
+```
+> Vergessen Sie nicht den Platzhalter mit ihrer IP am Ende des Befehls zu ersetzen!
+
+Nun müssen Sie noch bei https://classinsights.at/schulen unter dem Einstellungssymbol die URLs aktualisieren.
