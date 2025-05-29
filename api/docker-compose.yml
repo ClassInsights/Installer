@@ -23,7 +23,7 @@ services:
     image: ghcr.io/classinsights/dashboard:latest
     restart: unless-stopped
     ports:
-      - "52000:80"
+      - "52000:443"
     depends_on:
       - ci-api
     labels:
