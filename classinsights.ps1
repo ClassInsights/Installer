@@ -98,7 +98,7 @@ $uploadFiles = Read-Host "Wollen Sie die Dateien für die lokale API nun auf den
 if ($uploadFiles.ToLower() -eq 'j') {
     $username = Read-Host "Username: "
     $serverIp = Read-Host "IP des Servers: "
-    & scp -o StrictHostKeyChecking=accept-new -r api2 "${username}@${serverIp}:~/."
+    & scp -o StrictHostKeyChecking=accept-new -r api "${username}@${serverIp}:~/."
     
     Write-Host "Die Daten wurden erfolgreich auf den Server kopiert!"    
 }
